@@ -2,31 +2,27 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException, status, responses
 from models import UserModel
 from contextlib import asynccontextmanager
-from sqlmodel import SQLModel, select,orm
+from sqlmodel import SQLModel, select, orm
 from database import engine
 from src.auth.schemas import (
     UserPublicModel,
     CreateUserModel,
     UpdateUserModel,
     TokenData,
-    Token
+    Token,
 )
 from models import UserModel
 from database import SessionDep
 from passlib.context import CryptContext
 from typing import Annotated
 import jwt
-from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
+from  config import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
 
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-pwd_context = CryptContext(schemes=["bcrypt"],deprecated="auto")
-oauth2_schema =  OAuth2PasswordBearer(tokenUrl='token')
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @asynccontextmanager
@@ -44,40 +40,49 @@ def create_db_and_tables():
 
 app = FastAPI(lifespan=lifespan)
 
-def verify_password(plain_password,hashed_password):
+
+def verify_password(plain_password, hashed_password):
+    ## hasing logic is remaining ###########
     # print("Plain password : ",plain_password,"hashd_ passeword : ",hashed_password)
     return plain_password == hashed_password
     # return pwd_context.verify(plain_password,hashed_password)
 
+
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def get_user(session:SessionDep,username:str):
-    user = session.get(UserModel,username)
-    print("############",user,"#############")
+
+def get_user(session: SessionDep, username: str):
+    user = session.get(UserModel, username)
+    print("############", user, "#############")
     if not user:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return user
 
-def authenticate_user(session,username:str,password:str):
-    user = get_user(session,username)
+
+def authenticate_user(session, username: str, password: str):
+    user = get_user(session, username)
     if not user:
         return False
-    if not verify_password(password,user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         return False
     return user
 
-def create_access_token(data:dict,expires_delta:timedelta | None = None):
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp":expire})
-    encoded_jwt = jwt.encode(to_encode,SECRET_KEY, algorithm=ALGORITHM)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_schema)],session:SessionDep):
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_schema)], session: SessionDep
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -96,6 +101,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_schema)],session
         raise credentials_exception
     return user
 
+
 async def get_current_active_user(
     current_user: Annotated[UserModel, Depends(get_current_user)],
 ):
@@ -104,8 +110,13 @@ async def get_current_active_user(
     return current_user
 
 
-@app.post("/token",tags=["Authentication"],)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session:SessionDep) -> Token:
+@app.post(
+    "/token",
+    tags=["Authentication"],
+)
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
+) -> Token:
     user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -120,13 +131,24 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     return Token(access_token=access_token, token_type="bearer")
 
 
-@app.get("/users/me/", response_model=UserPublicModel,tags=["User"],)
-async def read_users_me(current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],):
+@app.get(
+    "/users/me/",
+    response_model=UserPublicModel,
+    tags=["User"],
+)
+async def read_users_me(
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
     return current_user
 
 
-@app.get("/users/me/items/",tags=["User"],)
-async def read_own_items(current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],):
+@app.get(
+    "/users/me/items/",
+    tags=["User"],
+)
+async def read_own_items(
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
     return [{"item_id": "Foo", "owner": current_user.username}]
 
 
@@ -146,7 +168,10 @@ def index():
     status_code=status.HTTP_200_OK,
     tags=["User"],
 )
-def list_users(session: SessionDep):
+def list_users(
+    session: SessionDep,
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
     users = session.exec(select(UserModel)).all()
     return users
 
@@ -157,7 +182,11 @@ def list_users(session: SessionDep):
     status_code=status.HTTP_201_CREATED,
     tags=["User"],
 )
-def crate_user(user: CreateUserModel, session: SessionDep):
+def crate_user(
+    user: CreateUserModel,
+    session: SessionDep,
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
     UserDatabase = UserModel.model_validate(user)
     session.add(UserDatabase)
     session.commit()
@@ -166,26 +195,35 @@ def crate_user(user: CreateUserModel, session: SessionDep):
 
 
 @app.get(
-    "/users/{user_id}",
+    "/users/{username}",
     response_model=UserPublicModel,
     status_code=status.HTTP_200_OK,
     tags=["User"],
 )
-def show_user_details(user_id: int, session: SessionDep):
-    user_detail = session.get(UserModel, user_id)
+def show_user_details(
+    username: str,
+    session: SessionDep,
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
+    user_detail = session.get(UserModel, username)
     if not user_detail:
         raise HTTPException(status_code=404, detail="User not found")
     return user_detail
 
 
 @app.patch(
-    "/users/{user_id}",
+    "/users/{username}",
     response_model=UserPublicModel,
     status_code=status.HTTP_200_OK,
     tags=["User"],
 )
-def update_user_details(user_id: int, user: UpdateUserModel, session: SessionDep):
-    user_database_details = session.get(UserModel, user_id)
+def update_user_details(
+    username: str,
+    user: UpdateUserModel,
+    session: SessionDep,
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
+    user_database_details = session.get(UserModel, username)
     if not user_database_details:
         raise HTTPException(status_code=404, detail="User not found")
     user_entered_data = user.model_dump(exclude_unset=True)
@@ -197,7 +235,11 @@ def update_user_details(user_id: int, user: UpdateUserModel, session: SessionDep
 
 
 @app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["User"])
-def delete_user(user_id: int, session: SessionDep):
+def delete_user(
+    user_id: int,
+    session: SessionDep,
+    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+):
     user = session.get(UserModel, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
