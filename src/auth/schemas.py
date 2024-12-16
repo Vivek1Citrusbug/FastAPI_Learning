@@ -1,7 +1,11 @@
 from sqlmodel import SQLModel, Field
 
 
-# pydantic schemas
+#############################
+##### PYDANTIC schemas ######
+#############################
+
+
 class UserBaseModel(SQLModel):
     name: str = Field(index=True)
     age: int | None = Field(default=None, index=True)
@@ -23,9 +27,3 @@ class UpdateUserModel(UserBaseModel):
     first_name: str | None = None
     last_name: str | None = None
     sensitive_info: str | None = None
-
-
-# Database model
-class UserModel(UserBaseModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    sensitive_info: str

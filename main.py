@@ -1,15 +1,14 @@
-from fastapi import FastAPI, HTTPException,status,responses
-from models import UserModel
+from fastapi import FastAPI, HTTPException, status, responses
+from src.auth.models import UserModel
 from contextlib import asynccontextmanager
-from sqlmodel import SQLModel, select
+from sqlmodel import SQLModel, select,orm
 from database import engine
-from models import (
+from src.auth.schemas import (
     UserPublicModel,
     CrateUserModel,
-    UserBaseModel,
     UpdateUserModel,
-    UserModel,
 )
+from src.auth.models import UserBaseModel, UserModel
 from database import SessionDep
 
 
@@ -34,18 +33,28 @@ app = FastAPI(lifespan=lifespan)
 ######################
 
 
-@app.get("/",tags=['Home'])
+@app.get("/", tags=["Home"])
 def index():
     return "Index Page"
 
 
-@app.get("/users", response_model=list[UserPublicModel],status_code=status.HTTP_200_OK,tags=['User'])
+@app.get(
+    "/users",
+    response_model=list[UserPublicModel],
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+)
 def list_users(session: SessionDep):
     users = session.exec(select(UserModel)).all()
     return users
 
 
-@app.post("/users", response_model=UserPublicModel,status_code=status.HTTP_201_CREATED,tags=['User'])
+@app.post(
+    "/users",
+    response_model=UserPublicModel,
+    status_code=status.HTTP_201_CREATED,
+    tags=["User"],
+)
 def crate_user(user: CrateUserModel, session: SessionDep):
     UserDatabase = UserModel.model_validate(user)
     session.add(UserDatabase)
@@ -54,7 +63,12 @@ def crate_user(user: CrateUserModel, session: SessionDep):
     return UserDatabase
 
 
-@app.get("/users/{user_id}", response_model=UserPublicModel,status_code=status.HTTP_200_OK,tags=['User'])
+@app.get(
+    "/users/{user_id}",
+    response_model=UserPublicModel,
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+)
 def show_user_details(user_id: int, session: SessionDep):
     user_detail = session.get(UserModel, user_id)
     if not user_detail:
@@ -62,7 +76,12 @@ def show_user_details(user_id: int, session: SessionDep):
     return user_detail
 
 
-@app.patch("/users/{user_id}", response_model=UserPublicModel,status_code=status.HTTP_200_OK,tags=['User'])
+@app.patch(
+    "/users/{user_id}",
+    response_model=UserPublicModel,
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+)
 def update_user_details(user_id: int, user: UpdateUserModel, session: SessionDep):
     user_database_details = session.get(UserModel, user_id)
     if not user_database_details:
@@ -75,7 +94,7 @@ def update_user_details(user_id: int, user: UpdateUserModel, session: SessionDep
     return user_database_details
 
 
-@app.delete("/users/{user_id}",status_code=status.HTTP_204_NO_CONTENT,tags=['User'])
+@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["User"])
 def delete_user(user_id: int, session: SessionDep):
     user = session.get(UserModel, user_id)
     if not user:
