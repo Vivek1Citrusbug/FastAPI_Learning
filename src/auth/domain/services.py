@@ -5,16 +5,16 @@ from passlib.context import CryptContext
 from .models import UserModel
 from src.auth.application.schemas import Token
 from config import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
+from src.auth.dependencies import get_current_active_user,get_user
 import jwt
 from database import SessionDep
+from fastapi import Depends
+from typing import Annotated
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password, hashed_password):
-    ## hasing logic is remaining ###########
-    # print("Plain password : ",plain_password,"hashd_ passeword : ",hashed_password)
-    # return plain_password == hashed_password
     return pwd_context.verify(plain_password,hashed_password)
 
 
@@ -44,10 +44,42 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 
-def get_user(session: SessionDep, username: str):
-    user = session.get(UserModel, username)
-    print("############", user, "#############")
-    if not user:
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return user
+
+class RoleChecker:
+    
+    def __init__(self,allowed_roles:list):
+        self.allowed_roles = allowed_roles
+    
+    def __call__(self, user:UserModel = Depends(get_current_active_user)):
+        # Superuser role check
+        print("allowed roles : ",self.allowed_roles)
+        print("user roles : "," superuser : ",user.is_superuser," staff : ",user.is_staff)
+
+        if user.is_superuser:
+            if "superuser" not in self.allowed_roles:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Operation not permitted: Requires access."
+                )
+            return 
+
+        # Staff role check
+        if user.is_staff:
+            if "staff" not in self.allowed_roles:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Operation not permitted: Requires access."
+                )
+            return 
+
+        # Generic role check
+        if "user" not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Operation not permitted: Requires user access."
+            )
+
+
+
+        
 

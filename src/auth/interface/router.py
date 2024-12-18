@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import SQLModel, select
 from database import SessionDep
-from src.auth.domain.services import authenticate_user, create_access_token,get_password_hash,get_user
+from src.auth.domain.services import authenticate_user, create_access_token,get_password_hash,get_user,RoleChecker
 from src.auth.domain.models import UserBaseModel, UserModel
 from src.auth.application.schemas import Token
 from fastapi import status
@@ -25,9 +25,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from database import engine, SessionDep
 from jwt.exceptions import InvalidTokenError
 
+
+
 router = APIRouter()
 
 
+
+allow_usercreate_resource = RoleChecker(["superuser"])
 
 ######################
 ##### Routes #########
@@ -36,6 +40,7 @@ router = APIRouter()
 
 @router.post(
     "/token",
+    status_code=status.HTTP_201_CREATED,
 )
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
@@ -97,6 +102,8 @@ async def list_users(
 async def crate_user(
     user: CreateUserModel,
     session: SessionDep,
+    dependencies=Depends(allow_usercreate_resource),
+
 ):
     hashed_password = get_password_hash(user.password)
     user_data = user.model_dump()

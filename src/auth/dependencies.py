@@ -10,8 +10,7 @@ from src.auth.domain.models import UserModel
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 from typing import Annotated
 from jwt.exceptions import InvalidTokenError
-from src.auth.application.schemas import Token
-from src.auth.domain.services import get_password_hash,get_user
+
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
@@ -39,6 +38,15 @@ async def get_current_user(
     user = get_user(session, username=token_data.username)
     if user is None:
         raise credentials_exception
+    return user
+
+
+
+def get_user(session: SessionDep, username: str):
+    user = session.get(UserModel, username)
+    print("############", user, "#############")
+    if not user:
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return user
 
 
