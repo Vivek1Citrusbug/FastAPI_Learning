@@ -13,7 +13,7 @@ class UserBaseModel(SQLModel):
     first_name: str | None = Field(default=None)
     last_name: str | None = Field(default=None)
     email: str | None = None
-    disabled: bool | None = None
+    # disabled: bool | None = None
 
 
 class UserPublicModel(UserBaseModel):

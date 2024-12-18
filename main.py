@@ -62,6 +62,7 @@ def get_user(session: SessionDep, username: str):
 
 def authenticate_user(session, username: str, password: str):
     user = get_user(session, username)
+    print("########",user)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -105,8 +106,8 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: Annotated[UserModel, Depends(get_current_user)],
 ):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+    # if current_user.disabled:
+    #     raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
@@ -185,7 +186,6 @@ def list_users(
 def crate_user(
     user: CreateUserModel,
     session: SessionDep,
-    current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
 ):
     UserDatabase = UserModel.model_validate(user)
     session.add(UserDatabase)
