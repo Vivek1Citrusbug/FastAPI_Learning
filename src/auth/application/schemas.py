@@ -6,7 +6,6 @@ from sqlmodel import SQLModel, Field
 #############################
 
 
-
 class UserBaseModel(SQLModel):
     name: str = Field(index=True)
     age: int | None = Field(default=None, index=True)
@@ -26,7 +25,7 @@ class UserPublicModel(UserBaseModel):
 
 class CreateUserModel(UserBaseModel):
     username:str
-    hashed_password: str
+    password: str
 
 
 class UpdateUserModel(UserBaseModel):
@@ -34,7 +33,7 @@ class UpdateUserModel(UserBaseModel):
     age: int | None = None
     first_name: str | None = None
     last_name: str | None = None
-    hashed_password: str | None = None
+    password: str | None = None
 
 
 class Token(SQLModel):
