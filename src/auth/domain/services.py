@@ -59,23 +59,15 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 class RoleChecker:
     """
-    Role checker class to check for the roles assigned to perticular user and given necessaery permission according to roles
+    Role checker class to check for the roles assigned to particular user and given neccessary permissions according to roles.
     """
 
     def __init__(self, allowed_roles: list):
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: UserModel = Depends(get_current_active_user)):
+        
         # Superuser role check
-        print("allowed roles : ", self.allowed_roles)
-        print(
-            "user roles : ",
-            " superuser : ",
-            user.is_superuser,
-            " staff : ",
-            user.is_staff,
-        )
-
         if user.is_superuser:
             if "superuser" not in self.allowed_roles:
                 raise HTTPException(
@@ -97,5 +89,5 @@ class RoleChecker:
         if "user" not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Operation not permitted: Requires user access.",
+                detail="Operation not permitted: Requires access.",
             )

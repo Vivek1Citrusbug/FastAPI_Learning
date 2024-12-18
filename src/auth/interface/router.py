@@ -33,7 +33,8 @@ from jwt.exceptions import InvalidTokenError
 router = APIRouter()
 
 
-allow_usercreate_resource = RoleChecker(["superuser"])
+allow_user_create_resource = RoleChecker(["superuser"])
+allow_user_delete_resource = RoleChecker(["superuser"])
 
 ######################
 ##### Routes #########
@@ -50,7 +51,7 @@ async def login_for_access_token(
     """
     Function to login user and return access token in return
     """
-    
+
     user = authenticate_user(session, form_data.username, form_data.password)
 
     if not user:
@@ -71,7 +72,7 @@ async def index():
     """
     Landing page
     """
-    
+
     return "Landing page"
 
 
@@ -87,7 +88,7 @@ async def list_users(
     """
     Function to list user basd on the permission
     """
-    
+
     query = select(UserModel)
 
     if current_user.is_superuser:
@@ -112,12 +113,12 @@ async def list_users(
 async def crate_user(
     user: CreateUserModel,
     session: SessionDep,
-    dependencies=Depends(allow_usercreate_resource),
+    dependencies=Depends(allow_user_create_resource),
 ):
     """
     Function to create user based on the allowed roles
     """
-    
+
     hashed_password = get_password_hash(user.password)
     user_data = user.model_dump()
     user_data["password"] = hashed_password
@@ -141,7 +142,7 @@ async def show_user_details(
     """
     Function to print user details based on the given role.
     """
-    
+
     target_user = session.get(UserModel, username)
 
     if not target_user:
@@ -174,7 +175,7 @@ async def update_user_details(
     """
     Function to update user details based on the given role.
     """
-     
+
     user_database_details = session.get(UserModel, username)
     if not user_database_details:
         raise HTTPException(status_code=404, detail="User not found")
@@ -194,11 +195,12 @@ async def delete_user(
     username: str,
     session: SessionDep,
     current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+    dependencies=Depends(allow_user_delete_resource),
 ):
     """
-    Function to delte user based on the given role.
+    Function to delete user based on the given role.
     """
-    
+
     user = session.get(UserModel, username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
