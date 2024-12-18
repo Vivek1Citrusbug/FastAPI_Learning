@@ -13,11 +13,16 @@ class UserBaseModel(SQLModel):
     first_name: str | None = Field(default=None)
     last_name: str | None = Field(default=None)
     email: str | None = None
+    is_superuser :bool = Field(default=False)
+    is_staff :bool = Field(default=False)
+    
     # disabled: bool | None = None
 
 
 class UserPublicModel(UserBaseModel):
     username:str
+    is_superuser :bool = Field(default=False)
+    is_staff :bool = Field(default=False)
 
 class CreateUserModel(UserBaseModel):
     username:str

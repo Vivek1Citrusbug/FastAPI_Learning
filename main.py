@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException, status, responses
 from models import UserModel
 from contextlib import asynccontextmanager
-from sqlmodel import SQLModel, select, orm
+from sqlmodel import SQLModel, or_, select, orm
 from database import engine
 from src.auth.schemas import (
     UserPublicModel,
@@ -18,7 +18,7 @@ from typing import Annotated
 import jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
-from  config import ACCESS_TOKEN_EXPIRE_MINUTES,ALGORITHM,SECRET_KEY
+from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -62,7 +62,7 @@ def get_user(session: SessionDep, username: str):
 
 def authenticate_user(session, username: str, password: str):
     user = get_user(session, username)
-    print("########",user)
+    print("########", user)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -173,7 +173,19 @@ def list_users(
     session: SessionDep,
     current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
 ):
-    users = session.exec(select(UserModel)).all()
+    query = select(UserModel)
+
+    if current_user.is_superuser:
+        pass
+    elif current_user.is_staff:
+        query = query.where(UserModel.is_superuser == False)
+    else:
+        query = query.where(
+            UserModel.is_superuser == False,
+            UserModel.is_staff == False,
+        )
+
+    users = session.exec(query).all()
     return users
 
 
@@ -205,10 +217,22 @@ def show_user_details(
     session: SessionDep,
     current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
 ):
-    user_detail = session.get(UserModel, username)
-    if not user_detail:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user_detail
+    target_user = session.get(UserModel, username)
+
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    if current_user.is_superuser:
+        return target_user
+    elif current_user.is_staff and (not target_user.is_superuser):
+        return target_user
+    elif current_user.username == username:
+        return target_user
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
 
 @app.patch(
