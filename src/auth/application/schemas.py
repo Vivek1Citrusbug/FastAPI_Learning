@@ -47,8 +47,6 @@ class TokenData(SQLModel):
 
 
 
-
-
 # class UserBaseModel(SQLModel):
 #     username: str 
 #     name: str = Field(index=True)

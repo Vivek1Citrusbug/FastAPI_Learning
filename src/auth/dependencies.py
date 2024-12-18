@@ -14,14 +14,23 @@ from jwt.exceptions import InvalidTokenError
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
+
 def create_db_and_tables():
-    """Creating database tables"""
+    """
+    Creating database tables
+    """
+
     print("All database model created#######")
     SQLModel.metadata.create_all(engine)
+
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_schema)], session: SessionDep
 ):
+    """
+    Function to get current logged in user
+    """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -41,8 +50,11 @@ async def get_current_user(
     return user
 
 
-
 def get_user(session: SessionDep, username: str):
+    """
+    Function to get user from given username
+    """
+
     user = session.get(UserModel, username)
     print("############", user, "#############")
     if not user:
@@ -53,4 +65,8 @@ def get_user(session: SessionDep, username: str):
 async def get_current_active_user(
     current_user: Annotated[UserModel, Depends(get_current_user)],
 ):
+    """
+    Function to get current active user
+    """
+
     return current_user
