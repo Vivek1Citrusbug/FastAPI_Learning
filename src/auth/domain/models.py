@@ -1,4 +1,4 @@
-from src.auth.schemas import UserBaseModel
+from src.auth.application.schemas import UserBaseModel
 from sqlmodel import Field,SQLModel
 
 #############################
@@ -8,7 +8,7 @@ from sqlmodel import Field,SQLModel
 
 class UserModel(UserBaseModel, table=True):
     username: str | None = Field(default=None, primary_key=True)    
-    hashed_password: str
+    password: str
 
 class AccessToken(SQLModel, table=True):  
     id: int = Field(default=None, primary_key=True)

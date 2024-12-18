@@ -6,22 +6,26 @@ from sqlmodel import SQLModel, Field
 #############################
 
 
-
 class UserBaseModel(SQLModel):
     name: str = Field(index=True)
     age: int | None = Field(default=None, index=True)
     first_name: str | None = Field(default=None)
     last_name: str | None = Field(default=None)
     email: str | None = None
-    disabled: bool | None = None
+    is_superuser :bool = Field(default=False)
+    is_staff :bool = Field(default=False)
+    
+    # disabled: bool | None = None
 
 
 class UserPublicModel(UserBaseModel):
     username:str
+    is_superuser :bool = Field(default=False)
+    is_staff :bool = Field(default=False)
 
 class CreateUserModel(UserBaseModel):
     username:str
-    hashed_password: str
+    password: str
 
 
 class UpdateUserModel(UserBaseModel):
@@ -29,7 +33,7 @@ class UpdateUserModel(UserBaseModel):
     age: int | None = None
     first_name: str | None = None
     last_name: str | None = None
-    hashed_password: str | None = None
+    password: str | None = None
 
 
 class Token(SQLModel):
