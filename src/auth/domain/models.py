@@ -16,7 +16,7 @@ class AccessToken(SQLModel, table=True):
     access_token: str
     token_type: str
 
-# class UserExtraDetails(SQLModel,table=True):
-#     id:int = Field(default=None,primary_key=True)
-#     birth_year:int
-#     address: str
+class UserExtraDetails(SQLModel,table=True):
+    id:int = Field(default=None,primary_key=True)
+    birth_year:int
+    address: str

@@ -36,6 +36,7 @@ router = APIRouter()
 allow_user_create_resource = RoleChecker(["superuser"])
 allow_user_delete_resource = RoleChecker(["superuser"])
 
+
 ######################
 ##### Routes #########
 ######################
