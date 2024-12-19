@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import traceback
@@ -27,19 +27,18 @@ class ErrorMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-# Unified error handler for HTTPExceptions
+
+# Unified exception handler for HTTPExceptions
 def http_exception_handler(request: Request, exc):
     """
     Function to handle http exceptions
     """
-    
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "error": {
                 "type": "HTTPException",
                 "message": exc.detail,
-                "details": None,
             }
         },
     )
