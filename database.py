@@ -4,7 +4,7 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Annotated
 
 sqlite_file_name = "NewDatabase.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = f"sqlite:///database/{sqlite_file_name}"
 connect_args = {"check_same_thread": False}
 
 # connetction to database

@@ -11,11 +11,9 @@ class ErrorMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         try:
-            # Proceed with the request
             response = await call_next(request)
             return response
         except Exception as e:
-            # Catch unhandled exceptions
             return JSONResponse(
                 status_code=500,
                 content={
@@ -28,7 +26,6 @@ class ErrorMiddleware(BaseHTTPMiddleware):
             )
 
 
-# Unified exception handler for HTTPExceptions
 def http_exception_handler(request: Request, exc):
     """
     Function to handle http exceptions

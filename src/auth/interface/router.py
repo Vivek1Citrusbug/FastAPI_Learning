@@ -84,6 +84,7 @@ async def index():
 async def list_users(
     session: SessionDep,
     current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+    dependencies=Depends(allow_user_create_resource),
 ):
     """
     Function to list user basd on the permission
