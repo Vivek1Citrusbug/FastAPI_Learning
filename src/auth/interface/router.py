@@ -67,7 +67,7 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/", tags=["Home"])
+@router.get("/")
 async def index():
     """
     Landing page
