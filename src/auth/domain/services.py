@@ -63,10 +63,11 @@ class RoleChecker:
     """
 
     def __init__(self, allowed_roles: list):
+        print("init")
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: UserModel = Depends(get_current_active_user)):
-        
+        print("call")
         # Superuser role check
         if user.is_superuser:
             if "superuser" not in self.allowed_roles:

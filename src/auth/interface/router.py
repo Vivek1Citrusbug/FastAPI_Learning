@@ -36,6 +36,7 @@ router = APIRouter()
 allow_user_create_resource = RoleChecker(["superuser"])
 allow_user_delete_resource = RoleChecker(["superuser"])
 
+
 ######################
 ##### Routes #########
 ######################
@@ -67,7 +68,7 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/", tags=["Home"])
+@router.get("/")
 async def index():
     """
     Landing page
@@ -84,6 +85,7 @@ async def index():
 async def list_users(
     session: SessionDep,
     current_user: Annotated[UserPublicModel, Depends(get_current_active_user)],
+    dependencies=Depends(allow_user_create_resource),
 ):
     """
     Function to list user basd on the permission
